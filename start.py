@@ -1,26 +1,33 @@
 import matplotlib.pyplot as plt
+from torch.utils.data import DataLoader
+from torchvision import transforms
 
 from FaceLandmarksDataset import FaceLandmarksDataset
-from helpers import show_landmarks
+from RandomCrop import RandomCrop
+from Rescale import Rescale
+from ToTensor import ToTensor
+from helpers import show_landmarks_batch
 
 face_dataset = FaceLandmarksDataset(
     csv_file='data/faces/face_landmarks.csv',
-    root_dir='data/faces'
+    root_dir='data/faces',
+    transform=transforms.Compose([
+        Rescale(256),
+        RandomCrop(224),
+        ToTensor()
+    ])
 )
 
-figure = plt.figure()
+dataloader = DataLoader(face_dataset, batch_size=4, shuffle=True)
 
-for i in range(len(face_dataset)):
-    sample = face_dataset[i]
+print(enumerate(dataloader))
+for i_batch, sample_batched in enumerate(dataloader, 0):
+    print(i_batch, sample_batched['image'].size(), sample_batched['landmarks'].size())
 
-    print(i, sample['image'].shape, sample['landmarks'].shape)
-
-    ax = plt.subplot(1, 4, i + 1)
-    plt.tight_layout()
-    ax.set_title("Sample {}".format(i))
-    ax.axis('off')
-    show_landmarks(**sample)
-
-    if i == 3:
+    if i_batch == 3:
+        plt.figure()
+        show_landmarks_batch(sample_batched)
+        plt.axis('off')
+        plt.ioff()
         plt.show()
         break
